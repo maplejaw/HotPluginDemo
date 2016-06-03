@@ -1,5 +1,6 @@
 package com.maplejaw.hotfix;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -53,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
             Class<?> clazz = classLoader.loadClass(packageName+".PluginClass");
             Comm obj = (Comm) clazz.newInstance();
             obj.startPluginActivity(this,classLoader.loadClass(packageName+".PluginActivity"));
+
+
           //  mImageView.setImageDrawable(obj.getImage(this));
           // obj.startMainActivity(this);
 
@@ -71,15 +74,34 @@ public class MainActivity extends AppCompatActivity {
     public void btnClick(View view){
 
         switch (view.getId()){
-            case R.id.btn1:
+          /*  case R.id.btn1:
                 //启动插件的页面
                 String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
-                loadResources(path);
-                useDexClassLoader(path);
-                break;
+              //  loadResources(path);
+                //获得包管理器
+                PackageManager pm = getPackageManager();
+                PackageInfo packageInfo=pm.getPackageArchiveInfo(path,PackageManager.GET_ACTIVITIES);
+                String packageName=packageInfo.packageName;
+
+                //启动Activity
+                Intent intent=new Intent(this,ProxyActivity.class);
+                intent.putExtra(ProxyActivity.EXTRA_DEX_PATH,path);
+                intent.putExtra(ProxyActivity.EXTRA_ACTIVITY_NAME,packageName+".TestActivity");
+
+                startActivity(intent);
+              //  useDexClassLoader(path);
+                break;*/
             case R.id.btn2:
                 //启动自己的页面
-                startActivity(new Intent(this,Main2Activity.class));
+                String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
+                hookInstrumentation( path);
+
+             //   loadResources(path);
+                //启动Activity
+                Intent intent1=new Intent(this,ProxyActivity.class);
+                intent1.putExtra(HookUtil.FLAG_ACTIVITY_FROM_PLUGIN,true);
+                intent1.putExtra(HookUtil.FLAG_ACTIVITY_CLASS_NAME,"com.maplejaw.hotplugin.TestActivity");
+                startActivity(intent1);
                 break;
 
         }
@@ -126,16 +148,50 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
+    private void hookInstrumentation(String path){
+        try {
+
+            File codeDir=getDir("dex", Context.MODE_PRIVATE);
+            //创建类加载器，把dex加载到虚拟机中
+            ClassLoader classLoader = new DexClassLoader(path,codeDir.getAbsolutePath() ,null,
+                    this.getClass().getClassLoader());
+
+
+
+            //获取ActivityThread的Class
+            Class<?> activityThreadCls = Class.forName("android.app.ActivityThread");
+            //获取ActivityThread对象
+            Method currentActivityThreadMethod=activityThreadCls.getMethod("currentActivityThread");
+            Object currentActivityThread= currentActivityThreadMethod.invoke(null);
+
+            // 反射获取Instrumentation
+            Field mInstrumentationField = activityThreadCls.getDeclaredField("mInstrumentation");
+            mInstrumentationField.setAccessible(true);
+            //  Instrumentation mInstrumentation = (Instrumentation) mInstrumentationField.get(currentActivityThread);
+
+            //反射修改Instrumentation
+
+            Instrumentation pluginInstrumentation = new HookInstrumentation(classLoader);
+            mInstrumentationField.set(currentActivityThread, pluginInstrumentation);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
     private void replaceClassLoader(ClassLoader dLoader,String resPath){
         try{
             String packageName = this.getPackageName();
-            ClassLoader loader=ClassLoader.getSystemClassLoader();
-            Class<?> loadApkCls =loader.loadClass("android.app.LoadedApk");
-            Class<?> activityThreadCls =loader.loadClass("android.app.ActivityThread");
+            //获取LoadedApk的Class
+            Class<?> loadApkCls =Class.forName("android.app.LoadedApk");
+            //获取ActivityThread的Class
+            Class<?> activityThreadCls =Class.forName("android.app.ActivityThread");
 
             //获取ActivityThread对象
             Method currentActivityThreadMethod=activityThreadCls.getMethod("currentActivityThread");
             Object currentActivityThread= currentActivityThreadMethod.invoke(null);
+
             //反射获取mPackages中的LoadedApk
             Field filed=activityThreadCls.getDeclaredField("mPackages");
             filed.setAccessible(true);
@@ -150,9 +206,14 @@ public class MainActivity extends AppCompatActivity {
             filed2.setAccessible(true);
             filed2.set(wr.get(),resPath);
 
+
+
+
+
         }catch(Exception e){
           e.printStackTrace();
         }
+
 
     }
 

@@ -1,57 +1,67 @@
 package com.maplejaw.hotplugin;
 
+import android.app.Activity;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
-import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Environment;
 
 import java.lang.reflect.Method;
 
-public class PluginActivity extends AppCompatActivity {
+public class BaseActivity extends Activity {
+  
+    private static final String TAG = "Client-BaseActivity";  
 
-    @Override
+    public static final String EXTRA_DEX_PATH = "extra_dex_path";
+    public static final String EXTRA_ACTIVITY_NAME = "extra_activity_name";
+
+
+
+    protected Activity that;
+
+
+
+    /**
+     * 将代理Activity传给插件Activity
+     * @param proxyActivity
+     */
+    public void setProxy(Activity proxyActivity) {
+        that = proxyActivity;
+    }  
+  
+    @Override  
     protected void onCreate(Bundle savedInstanceState) {
         String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
         loadResources(path);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_plugin);
-        Log.i("JG",  "包名："+getPackageName());
-        Log.w("JG",  "代码路径："+getPackageCodePath());
-        Log.e("JG",  "资源路径："+getPackageResourcePath());
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d("JG","onStart");
-    }
+    /**
+     * 启动Activity
+     * @param className
+     */
+    protected void startActivityByProxy(String className) {
+     /*   Intent intent = new Intent(PROXY_VIEW_ACTION);
+        intent.putExtra(EXTRA_DEX_PATH, DEX_PATH);
+        intent.putExtra(EXTRA_CLASS, className);
+        mProxyActivity.startActivity(intent);*/
+    }  
+  
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d("JG","onResume");
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d("JG","onPause");
+   /* @Override
+    public void setContentView(int layoutResID) {
+        that.setContentView(layoutResID);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d("JG","onStop");
-    }
+    }*/
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d("JG","onDestroy");
-    }
+
+
 
     //替换资源。
     private AssetManager mAssetManager;
