@@ -19,9 +19,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".Main2Activity">
-        </activity>
         <activity android:name=".ProxyActivity"/>
+        <activity android:name="com.maplejaw.hotplugin.PluginActivity"/>
     </application>
 
 </manifest>

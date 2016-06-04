@@ -16,21 +16,19 @@ import dalvik.system.DexClassLoader;
 
 public class ProxyActivity extends Activity {
 
-    public static final String EXTRA_DEX_PATH = "extra_dex_path";
-    public static final String EXTRA_ACTIVITY_NAME = "extra_activity_name";
 
-    private String mClass;
-    private String mDexPath;
+    private String mClass;//activity类名
+    private String mDexPath;//dex路径
 
-    private Object mRemoteActivity;
+    private Object mRemoteActivity;//插件activity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //获取插件dex路径
-        mDexPath = getIntent().getStringExtra(EXTRA_DEX_PATH);
+        mDexPath = getIntent().getStringExtra(HookUtil.EXTRA_DEX_PATH);
         //要启动的Activity的完整类名
-        mClass = getIntent().getStringExtra(EXTRA_ACTIVITY_NAME);
+        mClass = getIntent().getStringExtra(HookUtil.EXTRA_ACTIVITY_NAME);
         //加载资源
         loadResources(mDexPath);
         //启动插件Activity
@@ -138,6 +136,39 @@ public class ProxyActivity extends Activity {
         super.onPause();
     }
 
+    @Override
+    protected void onStop() {
+        Method method= mActivityLifecircleMethods.get("onStop");
+        try {
+            method.invoke(mRemoteActivity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        super.onStop();
+    }
+
+    @Override
+    protected void onRestart() {
+        Method method= mActivityLifecircleMethods.get("onRestart");
+        try {
+            method.invoke(mRemoteActivity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        super.onRestart();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Method method= mActivityLifecircleMethods.get("onDestroy");
+        try {
+            method.invoke(mRemoteActivity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        super.onDestroy();
+    }
+
     private HashMap<String,Method> mActivityLifecircleMethods=new HashMap<>();
     protected void instantiateLifecircleMethods(Class<?> localClass) {
 
@@ -147,7 +178,7 @@ public class ProxyActivity extends Activity {
                 "onResume",
                 "onPause",
                 "onStop",
-                "onDestory"
+                "onDestroy"
         };
         for (String methodName : methodNames) {
             Method method = null;

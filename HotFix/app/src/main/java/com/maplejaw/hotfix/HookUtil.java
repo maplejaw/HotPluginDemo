@@ -5,8 +5,8 @@ package com.maplejaw.hotfix;
  * @version 1.0, 2016/6/3
  */
 public class HookUtil {
-    public static final String FLAG_ACTIVITY_FROM_PLUGIN="flag_activity_from_plugin";
-    public static final String FLAG_ACTIVITY_CLASS_NAME="FLAG_ACTIVITY_CLASS_NAME";
-    //public static ClassLoader getPluginClassLoader
+    public static final String EXTRA_ACTIVITY_FROM_PLUGIN="extra_activity_from_plugin";
+    public static final String EXTRA_DEX_PATH = "extra_dex_path";
+    public static final String EXTRA_ACTIVITY_NAME = "extra_activity_name";
 
 }

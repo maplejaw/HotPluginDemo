@@ -36,76 +36,77 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private void useDexClassLoader(String path){
+
+    public void btnClick(View view){
+       //获取插件路径
+        String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
 
         File codeDir=getDir("dex", Context.MODE_PRIVATE);
         //创建类加载器，把dex加载到虚拟机中
         ClassLoader classLoader = new DexClassLoader(path,codeDir.getAbsolutePath() ,null,
                 this.getClass().getClassLoader());
 
-        replaceClassLoader(classLoader,path);
-        //combinePathList(classLoader);
         //获得包管理器
         PackageManager pm = getPackageManager();
         PackageInfo packageInfo=pm.getPackageArchiveInfo(path,PackageManager.GET_ACTIVITIES);
         String packageName=packageInfo.packageName;
 
-        try {
-            Class<?> clazz = classLoader.loadClass(packageName+".PluginClass");
-            Comm obj = (Comm) clazz.newInstance();
-            obj.startPluginActivity(this,classLoader.loadClass(packageName+".PluginActivity"));
-
-
-          //  mImageView.setImageDrawable(obj.getImage(this));
-          // obj.startMainActivity(this);
-
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-
-
-    public void btnClick(View view){
-
         switch (view.getId()){
-          /*  case R.id.btn1:
-                //启动插件的页面
-                String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
-              //  loadResources(path);
-                //获得包管理器
-                PackageManager pm = getPackageManager();
-                PackageInfo packageInfo=pm.getPackageArchiveInfo(path,PackageManager.GET_ACTIVITIES);
-                String packageName=packageInfo.packageName;
+            case R.id.btn1://hook classloader,需要在清单中声明
+                hookClassLoader(classLoader);
+                try {
+                    startActivity(new Intent(this,classLoader.loadClass(packageName+".PluginActivity")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                break;
+            case R.id.btn2://hook pathlist,需要在清单中声明
+                 hookPathList(classLoader);
+
+                try {
+                    startActivity(new Intent(this,classLoader.loadClass(packageName+".PluginActivity")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                break;
+            case R.id.btn3: //ProxyActivity
+
+
 
                 //启动Activity
                 Intent intent=new Intent(this,ProxyActivity.class);
-                intent.putExtra(ProxyActivity.EXTRA_DEX_PATH,path);
-                intent.putExtra(ProxyActivity.EXTRA_ACTIVITY_NAME,packageName+".TestActivity");
+                intent.putExtra(HookUtil.EXTRA_DEX_PATH,path);
+                intent.putExtra(HookUtil.EXTRA_ACTIVITY_NAME,packageName+".TestProxyActivity");
 
                 startActivity(intent);
-              //  useDexClassLoader(path);
-                break;*/
-            case R.id.btn2:
-                //启动自己的页面
-                String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
-                hookInstrumentation( path);
+                break;
+            case R.id.btn4://hook instrumentation
 
-             //   loadResources(path);
-                //启动Activity
-                Intent intent1=new Intent(this,ProxyActivity.class);
-                intent1.putExtra(HookUtil.FLAG_ACTIVITY_FROM_PLUGIN,true);
-                intent1.putExtra(HookUtil.FLAG_ACTIVITY_CLASS_NAME,"com.maplejaw.hotplugin.TestActivity");
+                hookInstrumentation(classLoader);
+
+                //启动activity
+                Intent intent1=new Intent(this,MainActivity.class);
+                intent1.putExtra(HookUtil.EXTRA_ACTIVITY_FROM_PLUGIN,true);
+                intent1.putExtra(HookUtil.EXTRA_ACTIVITY_NAME,packageName+".PluginActivity");
                 startActivity(intent1);
+                break;
+            case R.id.btn5://loadResource
+                loadResources(path);
+                try {
+                    Class<?> clazz = classLoader.loadClass(packageName+".PluginClass");
+                    Comm obj = (Comm) clazz.newInstance();
+                    mImageView.setImageDrawable(obj.getImage(this));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
 
         }
     }
+
 
 
 
@@ -140,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     public Resources.Theme getTheme() {
         return mTheme == null ? super.getTheme() : mTheme;
@@ -149,15 +149,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void hookInstrumentation(String path){
+    /**
+     * hook Instrumentation
+     * @param dLoader
+     */
+    private void hookInstrumentation(ClassLoader dLoader){
         try {
-
-            File codeDir=getDir("dex", Context.MODE_PRIVATE);
-            //创建类加载器，把dex加载到虚拟机中
-            ClassLoader classLoader = new DexClassLoader(path,codeDir.getAbsolutePath() ,null,
-                    this.getClass().getClassLoader());
-
-
 
             //获取ActivityThread的Class
             Class<?> activityThreadCls = Class.forName("android.app.ActivityThread");
@@ -168,11 +165,10 @@ public class MainActivity extends AppCompatActivity {
             // 反射获取Instrumentation
             Field mInstrumentationField = activityThreadCls.getDeclaredField("mInstrumentation");
             mInstrumentationField.setAccessible(true);
-            //  Instrumentation mInstrumentation = (Instrumentation) mInstrumentationField.get(currentActivityThread);
+             Instrumentation mInstrumentation = (Instrumentation) mInstrumentationField.get(currentActivityThread);
 
             //反射修改Instrumentation
-
-            Instrumentation pluginInstrumentation = new HookInstrumentation(classLoader);
+            Instrumentation pluginInstrumentation = new HookInstrumentation(mInstrumentation,dLoader);
             mInstrumentationField.set(currentActivityThread, pluginInstrumentation);
         }catch (Exception e){
             e.printStackTrace();
@@ -180,7 +176,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void replaceClassLoader(ClassLoader dLoader,String resPath){
+
+    /**
+     * hook ClassLoder
+     * @param dLoader
+     */
+    private void hookClassLoader(ClassLoader dLoader){
         try{
             String packageName = this.getPackageName();
             //获取LoadedApk的Class
@@ -201,10 +202,11 @@ public class MainActivity extends AppCompatActivity {
             Field classLoaderFiled=loadApkCls.getDeclaredField("mClassLoader");
             classLoaderFiled.setAccessible(true);
             classLoaderFiled.set(wr.get(),dLoader);
+
             //反射修改LoadedApk中的资源目录
-            Field filed2=loadApkCls.getDeclaredField("mResDir");
-            filed2.setAccessible(true);
-            filed2.set(wr.get(),resPath);
+//            Field filed2=loadApkCls.getDeclaredField("mResDir");
+//            filed2.setAccessible(true);
+//            filed2.set(wr.get(),resPath);
 
 
 
@@ -219,10 +221,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
-     * 以下是一种方式实现的
+     * hook PathList
+     * 合并dexElement到宿主的PathList
      * @param loader
      */
-    private void combinePathList(ClassLoader loader){
+    private void hookPathList(ClassLoader loader){
         //获取系统的classloader
         PathClassLoader pathLoader = (PathClassLoader) getClassLoader();
 
@@ -247,19 +250,18 @@ public class MainActivity extends AppCompatActivity {
             //设置给系统的dexpathlist
             dexElementsFiled.set(pathList1,combineDexElements);
 
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-
+    /**
+     * 合并两个数组
+     * @param arrayLhs 第一个数组
+     * @param arrayRhs 第二个数组
+     * @return
+     */
     private static Object combineArray(Object arrayLhs, Object arrayRhs) {
         Class<?> localClass = arrayLhs.getClass().getComponentType();
         int i = Array.getLength(arrayLhs);

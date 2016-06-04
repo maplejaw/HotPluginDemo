@@ -1,11 +1,13 @@
 package com.maplejaw.hotplugin;
 
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import java.lang.reflect.Method;
 
@@ -21,6 +23,10 @@ public class PluginActivity extends AppCompatActivity {
         Log.w("JG",  "代码路径："+getPackageCodePath());
         Log.e("JG",  "资源路径："+getPackageResourcePath());
 
+    }
+
+    public void btnClick(View view){
+        startActivity(new Intent(this,PluginActivity.class));
     }
 
     @Override

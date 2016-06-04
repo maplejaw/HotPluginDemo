@@ -10,14 +10,40 @@
         android:id="@+id/btn1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="调用插件"
+        android:text="hook ClassLoader"
         android:onClick="btnClick"/>
     <Button
         android:id="@+id/btn2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="调用自己"
+        android:text="hook PathList"
         android:onClick="btnClick"/>
+
+    <Button
+        android:id="@+id/btn3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ProxyActivity"
+        android:onClick="btnClick"/>
+
+    <Button
+        android:id="@+id/btn4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="hook Instrumentation"
+        android:onClick="btnClick"/>
+
+
+    <Button
+        android:id="@+id/btn5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="loaderResource"
+        android:onClick="btnClick"/>
+
+
+
+
 
 
 

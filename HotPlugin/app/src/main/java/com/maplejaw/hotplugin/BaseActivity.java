@@ -1,22 +1,21 @@
 package com.maplejaw.hotplugin;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Environment;
 
 import java.lang.reflect.Method;
 
 public class BaseActivity extends Activity {
   
-    private static final String TAG = "Client-BaseActivity";  
 
     public static final String EXTRA_DEX_PATH = "extra_dex_path";
     public static final String EXTRA_ACTIVITY_NAME = "extra_activity_name";
 
 
-
+    //指向代理activity
     protected Activity that;
 
 
@@ -31,35 +30,51 @@ public class BaseActivity extends Activity {
   
     @Override  
     protected void onCreate(Bundle savedInstanceState) {
-        String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
-        loadResources(path);
-        super.onCreate(savedInstanceState);
+        //String path= Environment.getExternalStorageDirectory().getAbsolutePath()+"/2.apk";
+        //loadResources(path);
 
     }
 
-    /**
-     * 启动Activity
-     * @param className
-     */
-    protected void startActivityByProxy(String className) {
-     /*   Intent intent = new Intent(PROXY_VIEW_ACTION);
-        intent.putExtra(EXTRA_DEX_PATH, DEX_PATH);
-        intent.putExtra(EXTRA_CLASS, className);
-        mProxyActivity.startActivity(intent);*/
-    }  
-  
+    @Override
+    protected void onStart() {
 
+    }
 
-   /* @Override
-    public void setContentView(int layoutResID) {
-        that.setContentView(layoutResID);
+    @Override
+    protected void onResume() {
+
+    }
+
+    @Override
+    protected void onPause() {
+
     }
 
     @Override
     protected void onStop() {
-        super.onStop();
-    }*/
 
+    }
+
+    @Override
+    protected void onRestart() {
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+    }
+
+    @Override
+    protected void onDestroy() {
+
+    }
+
+
+    /* @Override
+    public void setContentView(int layoutResID) {
+        that.setContentView(layoutResID);
+    }*/
 
 
 
